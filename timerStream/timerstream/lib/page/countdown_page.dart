@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class CountdownPage extends StatefulWidget {
   @override
@@ -7,30 +8,33 @@ class CountdownPage extends StatefulWidget {
 }
 
 class _CountdownPageState extends State<CountdownPage> {
-  static const initialCountdownDuration = Duration(minutes: 0); // Durata iniziale per il countdown
+  static const initialCountdownDuration = Duration(minutes: 0); // Durata iniziale del countdown
   Duration duration = Duration(); // Durata attuale del timer
-  late StreamController<int> _streamController; // StreamController per generare eventi ogni secondo
-  StreamSubscription<int>? _streamSubscription; // Gestisce la sottoscrizione agli eventi dello stream
-  Timer? periodicTimer; // Gestisce il Timer.periodic
+  late StreamController<int> _streamController; // StreamController per eventi ogni secondo
+  StreamSubscription<int>? _streamSubscription; // Sottoscrizione agli eventi dello stream
+  Timer? periodicTimer; // Gestisce il timer periodico
   bool isRunning = false; // Indica se il timer è in esecuzione
-  bool isCountdown = true; // Indica se siamo in modalità countdown o stopwatch
+  bool isCountdown = true; // Modalità countdown o stopwatch
+  final player = AudioPlayer(); // Istanza del player audio
 
   @override
   void initState() {
     super.initState();
     _streamController = StreamController<int>.broadcast();
-    reset(); // Imposta la durata iniziale
+    reset();
   }
 
   @override
   void dispose() {
-    _streamSubscription?.cancel(); // Cancella la sottoscrizione allo stream
-    periodicTimer?.cancel(); // Cancella il timer periodico
-    _streamController.close(); // Chiude il controller dello stream
+    _streamSubscription?.cancel();
+    periodicTimer?.cancel();
+    _streamController.close();
+    player.dispose(); // Libera le risorse del player audio
     super.dispose();
   }
 
-  // Reimposta il timer alla durata iniziale o a zero, a seconda della modalità
+
+  // Reimposta il timer alla durata iniziale o a zero
   void reset() {
     _streamSubscription?.cancel();
     periodicTimer?.cancel();
@@ -38,28 +42,29 @@ class _CountdownPageState extends State<CountdownPage> {
     isRunning = false;
   }
 
-  // Inizia a generare eventi dallo stream
+  // Inizia il flusso del timer
   void startStream() {
     _streamSubscription = _streamController.stream.listen((event) {
       setState(() {
         if (isCountdown) {
-          // Riduce il countdown ogni secondo
+          // Countdown: riduce la durata
           if (duration.inSeconds > 0) {
             duration -= const Duration(seconds: 1);
           } else {
-            _streamSubscription?.cancel(); // Ferma lo stream quando raggiunge zero
+            playAudio(); // Riproduce l'audio alla fine del countdown
+            _streamSubscription?.cancel();
             periodicTimer?.cancel();
-            reset(); // Reset automatico al termine del countdown
+            reset();
           }
         } else {
-          // Incrementa la durata nello stopwatch
+          // Stopwatch: aumenta la durata
           duration += const Duration(seconds: 1);
         }
       });
     });
   }
 
-  // Avvia il timer utilizzando lo stream
+  // Avvia il timer
   void startTimer() {
     if (!isRunning) {
       isRunning = true;
@@ -84,19 +89,24 @@ class _CountdownPageState extends State<CountdownPage> {
     setState(() => isCountdown = !isCountdown);
   }
 
+  // Riproduce l'audio "Lobotomy"
+  void playAudio() async {
+    await player.play(AssetSource('lobotomy sound effect.mp3'));
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              buildTime(), // Mostra il tempo formattato
+              buildTime(),
               const SizedBox(height: 24),
-              if (isCountdown) buildDurationAdjuster(), // Regola ore, minuti e secondi
+              if (isCountdown) buildDurationAdjuster(),
               const SizedBox(height: 24),
-              buildButtons(), // Pulsanti di controllo
+              buildButtons(),
               const SizedBox(height: 24),
-              buildModeSwitch(), // Switch tra countdown e stopwatch
+              buildModeSwitch(),
             ],
           ),
         ),
@@ -123,7 +133,7 @@ class _CountdownPageState extends State<CountdownPage> {
 
   // Crea una card per mostrare ore, minuti o secondi
   Widget buildTimeCard({required String time, required String header}) => Container(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -160,10 +170,7 @@ class _CountdownPageState extends State<CountdownPage> {
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.black, backgroundColor: Colors.white,
                 ),
-                child: Text(
-                  'STOP',
-                  style: const TextStyle(fontFamily: 'Roboto'),
-                ),
+                child: const Text('STOP'),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
@@ -171,10 +178,7 @@ class _CountdownPageState extends State<CountdownPage> {
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.black, backgroundColor: Colors.white,
                 ),
-                child: Text(
-                  'RESET',
-                  style: const TextStyle(fontFamily: 'Roboto'),
-                ),
+                child: const Text('RESET'),
               ),
             ],
           )
@@ -183,113 +187,51 @@ class _CountdownPageState extends State<CountdownPage> {
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.black, backgroundColor: Colors.white,
             ),
-            child: Text(
-              'START',
-              style: const TextStyle(fontFamily: 'Roboto'),
-            ),
+            child: const Text('START'),
           );
   }
 
-  // Switch tra le modalità countdown e stopwatch
+  // Switch tra countdown e stopwatch
   Widget buildModeSwitch() => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'Countdown',
-            style: const TextStyle(fontFamily: 'Roboto'),
-          ),
+          const Text('Countdown'),
           Switch(
             value: !isCountdown,
             onChanged: (_) => toggleMode(),
           ),
-          Text(
-            'Stopwatch',
-            style: const TextStyle(fontFamily: 'Roboto'),
-          ),
+          const Text('Stopwatch'),
         ],
       );
 
-  // Widget per regolare ore, minuti e secondi
-  Widget buildDurationAdjuster() => Visibility(
-        visible: isCountdown,
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Hours:', style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.remove),
-                  onPressed: () {
-                    setState(() {
-                      if (duration.inHours > 0) {
-                        duration -= Duration(hours: 1);
-                      }
-                    });
-                  },
-                ),
-                Text('${duration.inHours}', style: TextStyle(fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      duration += Duration(hours: 1);
-                    });
-                  },
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Minutes:', style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.remove),
-                  onPressed: () {
-                    setState(() {
-                      if (duration.inMinutes.remainder(60) > 0) {
-                        duration -= Duration(minutes: 1);
-                      }
-                    });
-                  },
-                ),
-                Text('${duration.inMinutes.remainder(60)}', style: TextStyle(fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      duration += Duration(minutes: 1);
-                    });
-                  },
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Seconds:', style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.remove),
-                  onPressed: () {
-                    setState(() {
-                      if (duration.inSeconds.remainder(60) > 0) {
-                        duration -= Duration(seconds: 1);
-                      }
-                    });
-                  },
-                ),
-                Text('${duration.inSeconds.remainder(60)}', style: TextStyle(fontSize: 16)),
-                IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      duration += Duration(seconds: 1);
-                    });
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
+  // Regola ore, minuti e secondi
+  Widget buildDurationAdjuster() => Column(
+        children: [
+          buildAdjusterRow('Hours', (value) {
+            setState(() => duration += Duration(hours: value));
+          }, duration.inHours),
+          buildAdjusterRow('Minutes', (value) {
+            setState(() => duration += Duration(minutes: value));
+          }, duration.inMinutes.remainder(60)),
+          buildAdjusterRow('Seconds', (value) {
+            setState(() => duration += Duration(seconds: value));
+          }, duration.inSeconds.remainder(60)),
+        ],
+      );
+
+  Widget buildAdjusterRow(String label, Function(int) onChange, int value) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('$label:', style: const TextStyle(fontSize: 16)),
+          IconButton(
+            icon: const Icon(Icons.remove),
+            onPressed: () => onChange(-1),
+          ),
+          Text('$value', style: const TextStyle(fontSize: 16)),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => onChange(1),
+          ),
+        ],
       );
 }
