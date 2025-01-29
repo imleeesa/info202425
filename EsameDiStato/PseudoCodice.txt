@@ -1,0 +1,56 @@
+Table "attività" {
+  "id" int(50) [pk, not null]
+  "tipo" varchar(255) [not null]
+}
+
+Table "prenotazioni" {
+  "data" varchar(255) [not null]
+  "idOfferta" int(50) [not null]
+  "idAbbonato" int(50) [not null]
+
+  Indexes {
+    (idOfferta, idAbbonato) [pk]
+  }
+}
+
+Table "palestra" {
+  "id" int(50) [pk, not null]
+  "nome" varchar(255) [not null]
+  "latitudine" int(50) [not null]
+  "longitudine" int(50) [not null]
+  "città" varchar(255) [not null]
+  "numero" int(50) [not null]
+  "via" varchar(255) [not null]
+}
+
+Table "ha" {
+  "idPalestra" int(50) [not null]
+  "idOfferta" int(50) [not null]
+
+  Indexes {
+    (idPalestra, idOfferta) [pk]
+  }
+}
+
+Table "offerta" {
+  "id" int(50) [pk, not null]
+  "prezzo" int(50) [not null]
+  "capienza" int(50) [not null]
+  "ora" int(50) [not null]
+  "giornoSettimana" varchar(255) [not null]
+  "idAttività" int(50) [not null]
+}
+
+Table "abbonato" {
+  "id" int(50) [pk, not null]
+  "nome" varchar(255) [not null]
+  "cognome" varchar(255) [not null]
+  "telefono" int(50) [not null]
+  "email" varchar(255) [not null]
+}
+
+Ref ha_palestra: palestra.id <> ha.idPalestra  
+Ref ha_offerta: ha.idOfferta <> offerta.id  
+Ref prenotazioni_offerta: prenotazioni.idOfferta <> offerta.id  
+Ref prenotazioni_abbonato: prenotazioni.idAbbonato <> abbonato.id  
+Ref attività_offerta: attività.id < offerta.idAttività  
