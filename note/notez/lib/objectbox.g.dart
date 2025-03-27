@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:flat_buffers/flat_buffers.dart' as fb;
 import 'package:objectbox/internal.dart'; // generated code can access "internal" functionality
 import 'package:objectbox/objectbox.dart';
+import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'models/note.dart';
 
@@ -45,15 +46,15 @@ final _entities = <ModelEntity>[
 ];
 
 /// Open an ObjectBox store with the model declared in this file.
-Store openStore(
+Future<Store> openStore(
         {String? directory,
         int? maxDBSizeInKB,
         int? fileMode,
         int? maxReaders,
         bool queriesCaseSensitiveDefault = true,
-        String? macosApplicationGroup}) =>
+        String? macosApplicationGroup}) async =>
     Store(getObjectBoxModel(),
-        directory: directory,
+        directory: directory ?? (await defaultStoreDirectory()).path,
         maxDBSizeInKB: maxDBSizeInKB,
         fileMode: fileMode,
         maxReaders: maxReaders,
