@@ -1,12 +1,13 @@
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:objectbox/objectbox.dart';
 import '../objectbox.g.dart';
 import '../models/note.dart';
 
-// Provider per ObjectBox
 final objectBoxProvider = FutureProvider<ObjectBox>((ref) async {
   return await ObjectBox.create();
 });
+
 class ObjectBox {
   late final Store store;
   late final Box<Note> noteBox;
@@ -25,19 +26,8 @@ class ObjectBox {
     return _instance!;
   }
 
-  void addNote(Note note) {
-    noteBox.put(note);
-  }
-
-  List<Note> getNotes() {
-    return noteBox.getAll();
-  }
-
-  void deleteNote(int id) {
-    noteBox.remove(id);
-  }
-
-  void updateNote(Note note) {
-    noteBox.put(note); // ObjectBox aggiorna automaticamente se l'ID esiste
-  }
+  void addNote(Note note) => noteBox.put(note);
+  List<Note> getNotes() => noteBox.getAll();
+  void deleteNote(int id) => noteBox.remove(id);
+  void updateNote(Note note) => noteBox.put(note);
 }

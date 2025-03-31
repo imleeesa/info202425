@@ -1,10 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/note.dart';
 import '../providers/objectbox_provider.dart';
 
 class NoteEditScreen extends ConsumerWidget {
-  final Note? note; // Se null, stiamo creando una nuova nota
+  final Note? note;
   final TextEditingController titleController = TextEditingController();
   final TextEditingController textController = TextEditingController();
 
@@ -25,33 +26,21 @@ class NoteEditScreen extends ConsumerWidget {
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(labelText: 'Titolo'),
-            ),
-            TextField(
-              controller: textController,
-              decoration: InputDecoration(labelText: 'Testo'),
-            ),
+            TextField(controller: titleController, decoration: InputDecoration(labelText: 'Titolo')),
+            TextField(controller: textController, decoration: InputDecoration(labelText: 'Testo')),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 objectBoxAsync.when(
                   data: (objectBox) {
+                    final updatedNote = Note(
+                      id: note?.id ?? 0,
+                      title: titleController.text,
+                      text: textController.text,
+                    );
                     if (note == null) {
-                      // Creazione di una nuova nota
-                      final newNote = Note(
-                        title: titleController.text,
-                        text: textController.text,
-                      );
-                      objectBox.addNote(newNote);
+                      objectBox.addNote(updatedNote);
                     } else {
-                      // Modifica della nota esistente
-                      final updatedNote = Note(
-                        id: note!.id,
-                        title: titleController.text,
-                        text: textController.text,
-                      );
                       objectBox.updateNote(updatedNote);
                     }
                     ref.invalidate(objectBoxProvider);

@@ -94,7 +94,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(1, titleOffset);
           fbb.addOffset(2, textOffset);
           fbb.finish(fbb.endTable());
-          return object.id;
+          return object.id ?? 0; // Provide a default value if id is null
         },
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
